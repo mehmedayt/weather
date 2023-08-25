@@ -3,6 +3,7 @@ const searchButton = document.querySelector('.search-btn');
 const locationButton = document.querySelector('.location-btn');
 const currentWeatherDiv = document.querySelector('.current-weather');
 const weatherCardDiv = document.querySelector('.weather-cards');
+const proxyUrl = "https://api.allorigins.win/get?url=";
 
 
 
@@ -33,7 +34,7 @@ const createWeatherCard = (cityName, weatherItem, index) => {
 
 
 const getWeatherDetails = (cityName, lat, lon) => {
-    const WEATHER_API_URL = `https://cors-anywhere.herokuapp.com/http://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}`;
+    const WEATHER_API_URL = `${proxyUrl}http://api.openweathermap.org/geo/1.0/direct?q=${cityName}&limit=1&appid=${API_KEY}`;
 
     fetch(WEATHER_API_URL).then(res => res.json()).then(data => {
         const uniqueForecastDays = [];
