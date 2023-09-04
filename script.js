@@ -30,55 +30,64 @@ const createWeatherCard = (cityName, weatherItem, index) => {
     }
 };
 
-const getWeatherDetails = (cityName, lat, lon) => {
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+const getWeatherDetails = async (cityName, lat, lon) => {
     const WEATHER_API_URL = `https://cors-anywhere.herokuapp.com/http://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}`;
-    fetch(WEATHER_API_URL)
-        .then(res => res.json())
-        .then(data => {
-            const uniqueForecastDays = [];
+    
+    try {
+        const response = await fetch(WEATHER_API_URL);
+        if (!response.ok) {
+            throw new Error('City not found or API error');
+        }
+        const data = await response.json();
 
-            const fiveDaysForecast = data.list.filter(forecast => {
-                const forecastDate = new Date(forecast.dt_txt).getDate();
-                if (!uniqueForecastDays.includes(forecastDate)) {
-                    return uniqueForecastDays.push(forecastDate);
-                }
-            });
-
-            cityInput.value = "";
-            currentWeatherDiv.innerHTML = "";
-            weatherCardDiv.innerHTML = "";
-
-            fiveDaysForecast.forEach((weatherItem, index) => {
-                if (index === 0) {
-                    currentWeatherDiv.insertAdjacentHTML("beforeend", createWeatherCard(cityName, weatherItem, index));
-                } else {
-                    weatherCardDiv.insertAdjacentHTML("beforeend", createWeatherCard(cityName, weatherItem));
-                }
-            });
-        })
-        .catch(() => {
-            alert("An error occurred while fetching the weather forecast!");
+        const uniqueForecastDays = [];
+        const fiveDaysForecast = data.list.filter(forecast => {
+            const forecastDate = new Date(forecast.dt_txt).getDate();
+            if (!uniqueForecastDays.includes(forecastDate)) {
+                return uniqueForecastDays.push(forecastDate);
+            }
         });
+
+        cityInput.value = "";
+        currentWeatherDiv.innerHTML = "";
+        weatherCardDiv.innerHTML = "";
+
+        fiveDaysForecast.forEach((weatherItem, index) => {
+            if (index === 0) {
+                currentWeatherDiv.insertAdjacentHTML("beforeend", createWeatherCard(cityName, weatherItem, index));
+            } else {
+                weatherCardDiv.insertAdjacentHTML("beforeend", createWeatherCard(cityName, weatherItem));
+            }
+        });
+    } catch (error) {
+        alert("An error occurred while fetching the weather forecast!");
+    }
 };
 
-const getCityCoordinates = () => {
+const getCityCoordinates = async () => {
     const cityName = cityInput.value.trim();
     if (!cityName) return;
 
     const GEOCODING_API_URL = `${proxyUrl}http://api.openweathermap.org/geo/1.0/direct?q=${cityName}&limit=1&appid=${API_KEY}`;
 
-    fetch(GEOCODING_API_URL)
-        .then(res => res.json())
-        .then(data => {
-            if (data.length === 0) {
-                return alert(`No coordinates found forr ${cityName}`);
-            }
-            const { name, lat, lon } = data[0];
-            getWeatherDetails(name, lat, lon);
-        })
-        .catch(() => {
-            alert("An error occurred while fetching the coordinates!");
-        });
+    try {
+        const response = await fetch(GEOCODING_API_URL);
+        if (!response.ok) {
+            throw new Error('City not found or API error');
+        }
+        const data = await response.json();
+
+        if (data.length === 0) {
+            return alert(`No coordinates found for ${cityName}`);
+        }
+
+        const { name, lat, lon } = data[0];
+        await getWeatherDetails(name, lat, lon);
+    } catch (error) {
+        alert("An error occurred while fetching the coordinates!");
+    }
 };
 
 const getUserCoordinates = () => {
@@ -106,6 +115,8 @@ const getUserCoordinates = () => {
 };
 
 locationButton.addEventListener('click', getUserCoordinates);
-searchButton.addEventListener('click', getCityCoordinates);
+searchButton.addEventListener('click', async () => {
+    await getCityCoordinates();
+    await delay(2000); // Wait for 2 seconds before making the next request to avoid rate limiting
+});
 cityInput.addEventListener('keyup', e => e.key === "Enter" && getCityCoordinates());
-
