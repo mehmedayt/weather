@@ -117,6 +117,6 @@ const getUserCoordinates = () => {
 locationButton.addEventListener('click', getUserCoordinates);
 searchButton.addEventListener('click', async () => {
     await getCityCoordinates();
-    await delay(2000); // Wait for 2 seconds before making the next request to avoid rate limiting
+    await delay(5000); // Wait for 5 seconds before making the next request to avoid rate limiting
 });
 cityInput.addEventListener('keyup', e => e.key === "Enter" && getCityCoordinates());
